@@ -273,18 +273,18 @@ else:
     # Automatically generate AI insights
     with st.spinner('🤖 Analyzing your chat history...'):
         try:
-            from google import genai
-            from google.genai import types
+            import google.generativeai as genai
             
-            # Configure the client with your API key
-            client = genai.Client(api_key=gemini_api_key)
+            # Configure the API key
+            genai.configure(api_key=gemini_api_key)
             
-            # Generate insights based on the user's data
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-lite-preview-06-17", 
-                config=types.GenerateContentConfig(
+            # Create the model with system instruction
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-flash",
+                generation_config=genai.types.GenerationConfig(
                     temperature=0.1,  # Low temperature for more deterministic output
-                    system_instruction="""
+                ),
+                system_instruction="""
                     You are a helpful assistant that is worldclass at parsing large amounts of data and deriving insights from them. 
                     You are going to be given a string of data that contains all the messages from a user's chat history with ChatGPT.
                     You're task is to write a 4 sentence summary of the user based on the chat history and provide 10 the most prominent topics in the total chat history.
@@ -312,9 +312,11 @@ else:
                     {"summary": "This user frequently asks for help with programming and technical questions. They seem to be working on various software projects and learning new technologies. The user often requests code examples and explanations for complex concepts. They appear to be a developer or student interested in improving their technical skills.", "topics": ["programming", "code examples", "technical questions", "software development", "learning", "debugging", "algorithms", "web development", "data structures", "best practices"]}
                     
                     Do not include any other text, explanations, or formatting. Only the JSON object.
-                    """),
-                    contents=f"{messages_string}"
-                    )
+                    """
+            )
+            
+            # Generate insights based on the user's data
+            response = model.generate_content(f"{messages_string}")
             
             # Parse JSON response with automatic fallback handling (errors logged to console only)
             response_data = None
